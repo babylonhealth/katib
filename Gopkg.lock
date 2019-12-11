@@ -38,6 +38,14 @@
   version = "v13.3.0"
 
 [[projects]]
+  digest = "1:26e56bf1243a3675608f918a1574bf0005d5263b67b84a24a5fb0946ad7a75e3"
+  name = "github.com/DATA-DOG/go-sqlmock"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "3f9954f6f6697845b082ca57995849ddf614f450"
+  version = "v1.3.3"
+
+[[projects]]
   digest = "1:d8ebbd207f3d3266d4423ce4860c9f3794956306ded6c7ba312ecc69cdfbf04c"
   name = "github.com/PuerkitoBio/purell"
   packages = ["."]
@@ -978,14 +986,6 @@
   version = "v1.18.0"
 
 [[projects]]
-  digest = "1:df28176ae6eed6b64b667963455f4b60c17ecb2594e6ffa72f149b911ea15fa4"
-  name = "gopkg.in/DATA-DOG/go-sqlmock.v1"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "472e287dbafe67e526a3797165b64cb14f34705a"
-  version = "v1.3.2"
-
-[[projects]]
   digest = "1:1b91ae0dc69a41d4c2ed23ea5cffb721ea63f5037ca4b81e6d6771fbb8f45129"
   name = "gopkg.in/fsnotify.v1"
   packages = ["."]
@@ -1362,12 +1362,12 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/DATA-DOG/go-sqlmock",
     "github.com/awalterschulze/gographviz",
     "github.com/emicklei/go-restful",
     "github.com/ghodss/yaml",
     "github.com/go-sql-driver/mysql",
     "github.com/golang/mock/gomock",
-    "github.com/golang/protobuf/jsonpb",
     "github.com/golang/protobuf/proto",
     "github.com/golang/protobuf/protoc-gen-go",
     "github.com/google/go-containerregistry/pkg/authn",
@@ -1395,7 +1395,6 @@
     "google.golang.org/grpc/grpclog",
     "google.golang.org/grpc/reflection",
     "google.golang.org/grpc/status",
-    "gopkg.in/DATA-DOG/go-sqlmock.v1",
     "k8s.io/api/admissionregistration/v1beta1",
     "k8s.io/api/apps/v1",
     "k8s.io/api/batch/v1",
@@ -1415,7 +1414,6 @@
     "k8s.io/apimachinery/pkg/util/intstr",
     "k8s.io/apimachinery/pkg/util/rand",
     "k8s.io/apimachinery/pkg/util/yaml",
-    "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
@@ -1423,6 +1421,7 @@
     "k8s.io/code-generator/cmd/deepcopy-gen",
     "k8s.io/klog",
     "k8s.io/utils/pointer",
+    "sigs.k8s.io/controller-runtime/pkg/cache",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
     "sigs.k8s.io/controller-runtime/pkg/controller",

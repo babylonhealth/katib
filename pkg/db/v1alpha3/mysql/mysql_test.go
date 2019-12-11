@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 
 	api_pb "github.com/kubeflow/katib/pkg/apis/manager/v1alpha3"
 	"github.com/kubeflow/katib/pkg/db/v1alpha3/common"

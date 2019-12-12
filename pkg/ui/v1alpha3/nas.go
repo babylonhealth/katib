@@ -14,7 +14,7 @@ import (
 func (k *KatibUIHandler) FetchAllNASJobs(w http.ResponseWriter, r *http.Request) {
 	//enableCors(&w)
 	// Use "" to get experiments in all namespaces.
-	jobs, err := k.getExperimentList("", JobTypeNAS)
+	jobs, err := k.getExperimentList(k.katibClient.GetClientNamespace(), JobTypeNAS)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

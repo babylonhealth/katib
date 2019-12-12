@@ -17,7 +17,7 @@ import (
 // FetchAllHPJobs gets experiments in all namespaces.
 func (k *KatibUIHandler) FetchAllHPJobs(w http.ResponseWriter, r *http.Request) {
 	// Use "" to get experiments in all namespaces.
-	jobs, err := k.getExperimentList("", JobTypeHP)
+	jobs, err := k.getExperimentList(k.katibClient.GetClientNamespace(), JobTypeHP)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -34,7 +34,7 @@ func (k *KatibUIHandler) FetchAllHPJobs(w http.ResponseWriter, r *http.Request) 
 // FetchAllHPJobs gets experiments in all namespaces.
 func (k *KatibUIHandler) FetchHPJob(w http.ResponseWriter, r *http.Request) {
 	experimentName := r.URL.Query()["experimentName"][0]
-	namespace := r.URL.Query()["namespace"][0]
+	namespace := k.getNamespaceFromRequest(r)
 
 	experiment, err := k.katibClient.GetExperiment(experimentName, namespace)
 	if err != nil {
@@ -53,7 +53,7 @@ func (k *KatibUIHandler) FetchHPJob(w http.ResponseWriter, r *http.Request) {
 func (k *KatibUIHandler) FetchHPJobInfo(w http.ResponseWriter, r *http.Request) {
 	//enableCors(&w)
 	experimentName := r.URL.Query()["experimentName"][0]
-	namespace := r.URL.Query()["namespace"][0]
+	namespace := k.getNamespaceFromRequest(r)
 
 	conn, c := k.connectManager()
 	defer conn.Close()

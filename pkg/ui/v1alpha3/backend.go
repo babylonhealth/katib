@@ -17,8 +17,8 @@ import (
 	"github.com/kubeflow/katib/pkg/util/v1alpha3/katibclient"
 )
 
-func NewKatibUIHandler() *KatibUIHandler {
-	kclient, err := katibclient.NewClient(client.Options{})
+func NewKatibUIHandler(namespace string) *KatibUIHandler {
+	kclient, err := katibclient.NewClient(client.Options{}, namespace)
 	if err != nil {
 		log.Printf("NewClient for Katib failed: %v", err)
 		panic(err)
@@ -26,6 +26,14 @@ func NewKatibUIHandler() *KatibUIHandler {
 	return &KatibUIHandler{
 		katibClient: kclient,
 	}
+}
+
+func (k *KatibUIHandler) getNamespaceFromRequest(r *http.Request) string {
+	namespace := r.URL.Query()["namespace"][0]
+	if namespace == "" {
+		return k.katibClient.GetClientNamespace()
+	}
+	return namespace
 }
 
 func (k *KatibUIHandler) connectManager() (*grpc.ClientConn, api_pb_v1alpha3.ManagerClient) {
@@ -100,7 +108,7 @@ func (k *KatibUIHandler) SubmitParamsJob(w http.ResponseWriter, r *http.Request)
 
 func (k *KatibUIHandler) DeleteExperiment(w http.ResponseWriter, r *http.Request) {
 	experimentName := r.URL.Query()["experimentName"][0]
-	namespace := r.URL.Query()["namespace"][0]
+	namespace := k.getNamespaceFromRequest(r)
 
 	experiment, err := k.katibClient.GetExperiment(experimentName, namespace)
 	if err != nil {
@@ -119,9 +127,13 @@ func (k *KatibUIHandler) DeleteExperiment(w http.ResponseWriter, r *http.Request
 // FetchTrialTemplates gets the trial templates for the given namespace.
 func (k *KatibUIHandler) FetchTrialTemplates(w http.ResponseWriter, r *http.Request) {
 	//enableCors(&w)
-	namespace := r.URL.Query()["namespace"][0]
+	namespace := k.getNamespaceFromRequest(r)
 	if namespace == "" {
-		namespace = consts.DefaultKatibNamespace
+		if k.katibClient.GetClientNamespace() == "" {
+			namespace = consts.DefaultKatibNamespace
+		} else {
+			namespace = k.katibClient.GetClientNamespace()
+		}
 	}
 	trialTemplates, err := k.katibClient.GetTrialTemplates(namespace)
 	if err != nil {
@@ -171,17 +183,21 @@ func (k *KatibUIHandler) AddEditDeleteTemplate(w http.ResponseWriter, r *http.Re
 }
 
 func (k *KatibUIHandler) FetchNamespaces(w http.ResponseWriter, r *http.Request) {
-
-	namespaceList, err := k.katibClient.GetNamespaceList()
-	if err != nil {
-		log.Printf("GetNamespaceList failed: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 	var namespaces []string
 
-	for _, namespace := range namespaceList.Items {
-		namespaces = append(namespaces, namespace.ObjectMeta.Name)
+	if k.katibClient.GetClientNamespace() == "" {
+		namespaceList, err := k.katibClient.GetNamespaceList()
+		if err != nil {
+			log.Printf("GetNamespaceList failed: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		for _, namespace := range namespaceList.Items {
+			namespaces = append(namespaces, namespace.ObjectMeta.Name)
+		}
+	} else {
+		namespaces = append(namespaces, k.katibClient.GetClientNamespace())
 	}
 
 	response, err := json.Marshal(namespaces)

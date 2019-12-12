@@ -50,3 +50,6 @@ endif
 
 build: depend generate
 	bash scripts/v1alpha3/build.sh
+
+build-push-ui:
+	bash scripts/v1alpha3/push.sh

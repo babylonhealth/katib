@@ -37,6 +37,10 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
+func (m *MockClient) GetClientNamespace() string {
+	return ""
+}
+
 // CreateExperiment mocks base method
 func (m *MockClient) CreateExperiment(arg0 *v1alpha3.Experiment, arg1 ...string) error {
 	m.ctrl.T.Helper()

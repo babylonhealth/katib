@@ -45,10 +45,16 @@ type Client interface {
 	GetSuggestion(name string, namespace ...string) (*suggestionsv1alpha3.Suggestion, error)
 	UpdateTrialTemplates(newTrialTemplates map[string]string, namespace ...string) error
 	GetNamespaceList() (*apiv1.NamespaceList, error)
+	GetClientNamespace() string
 }
 
 type KatibClient struct {
 	client client.Client
+	namespace string
+}
+
+func (k *KatibClient) GetClientNamespace() string {
+	return k.namespace
 }
 
 func NewWithGivenClient(c client.Client) Client {
@@ -57,7 +63,7 @@ func NewWithGivenClient(c client.Client) Client {
 	}
 }
 
-func NewClient(options client.Options) (Client, error) {
+func NewClient(options client.Options, namespace string) (Client, error) {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, err
@@ -68,6 +74,7 @@ func NewClient(options client.Options) (Client, error) {
 	cl, err := client.New(cfg, options)
 	return &KatibClient{
 		client: cl,
+		namespace: namespace,
 	}, nil
 }
 
@@ -196,7 +203,6 @@ func getNamespace(namespace ...string) string {
 }
 
 func (k *KatibClient) GetNamespaceList() (*apiv1.NamespaceList, error) {
-
 	namespaceList := &apiv1.NamespaceList{}
 	listOpt := &client.ListOptions{}
 

@@ -9,7 +9,7 @@ const initialState = {
         },
         {
             name: "Namespace",
-            value: "kubeflow",
+            value: "",
             description: "Namespace to deploy an experiment"
         }
     ],
@@ -345,7 +345,7 @@ const initialState = {
     ],
     allParameterTypes: ["int", "double", "categorical"],
     trial: 'nasRLTrialTemplate.yaml',
-    trialNamespace: "kubeflow",
+    trialNamespace: "",
     currentYaml: '',
     snackText: '',
     snackOpen: false,

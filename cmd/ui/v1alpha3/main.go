@@ -11,20 +11,33 @@ import (
 	ui "github.com/kubeflow/katib/pkg/ui/v1alpha3"
 )
 
+type namespaceList []string
+
+func (n *namespaceList) String() string {
+	return fmt.Sprintf("%v", *n)
+}
+
+func (n *namespaceList) Set(value string) error {
+	*n = append(*n, value)
+	return nil
+}
+
 var (
-	port, host, namespace, buildDir *string
+	port, host, buildDir *string
 )
+
+var namespaces namespaceList
 
 func init() {
 	port = flag.String("port", "80", "the port to listen to for incoming HTTP connections")
 	host = flag.String("host", "0.0.0.0", "the host to listen to for incoming HTTP connections")
-	namespace = flag.String("namespace", "", "the namespace where the UI operates")
+	flag.Var(&namespaces, "namespace", "the namespace list where the UI operates")
 	buildDir = flag.String("build-dir", "/app/build", "the dir of frontend")
 }
 func main() {
 	flag.Parse()
-	log.Printf("Create Katib UI Handler in namespace %s", *namespace)
-	kuh := ui.NewKatibUIHandler(*namespace)
+	log.Printf("Creating Katib UI Handler in namespace %s", namespaces)
+	kuh := ui.NewKatibUIHandler(namespaces)
 
 	log.Printf("Serving the frontend dir %s", *buildDir)
 	frontend := http.FileServer(http.Dir(*buildDir))

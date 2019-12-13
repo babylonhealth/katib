@@ -41,6 +41,10 @@ func (m *MockClient) GetClientNamespace() string {
 	return ""
 }
 
+func (m *MockClient) IsNamespaceAllowed(ns string) bool {
+	return true
+}
+
 // CreateExperiment mocks base method
 func (m *MockClient) CreateExperiment(arg0 *v1alpha3.Experiment, arg1 ...string) error {
 	m.ctrl.T.Helper()
@@ -153,12 +157,17 @@ func (mr *MockClientMockRecorder) GetExperimentList(arg0 ...interface{}) *gomock
 }
 
 // GetNamespaceList mocks base method
-func (m *MockClient) GetNamespaceList() (*v1.NamespaceList, error) {
+func (m *MockClient) GetNamespaceList() ([]string, error) {
+	var namespaces []string
+
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNamespaceList")
 	ret0, _ := ret[0].(*v1.NamespaceList)
 	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	for _, namespace := range ret0.Items {
+		namespaces = append(namespaces, namespace.ObjectMeta.Name)
+	}
+	return namespaces, ret1
 }
 
 // GetNamespaceList indicates an expected call of GetNamespaceList

@@ -6,7 +6,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
-
+import DisplayNamespaceSelection from '../../../Templates/Common/DisplayNamespaceSelection';
 import { changeMeta } from '../../../../actions/hpCreateActions';
 
 
@@ -31,6 +31,7 @@ const useStyles = makeStyles({
 
 const CommonParametersMeta = (props) => {
     const classes = useStyles();
+    const { namespaces } = props;
 
     const onMetaChange = (param) => (event) => {
         props.changeMeta(param, event.target.value);
@@ -51,11 +52,19 @@ const CommonParametersMeta = (props) => {
                                 </Typography>
                             </Grid>
                             <Grid item xs={12} sm={8}>
+                            {param.name !== "Namespace" ? (
                                 <TextField
                                     className={classes.textField}
                                     value={param.value}
                                     onChange={onMetaChange(param.name)}
-                                    />
+                                />
+                            ) : (
+                                <DisplayNamespaceSelection
+                                    value={param.value}
+                                    onChange={onMetaChange(param.name)}
+                                    namespaces={namespaces}
+                                />
+                            )}
                             </Grid>
                         </Grid>
                     </div>

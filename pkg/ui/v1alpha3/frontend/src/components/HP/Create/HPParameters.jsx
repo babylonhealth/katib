@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import withStyles from '@material-ui/styles/withStyles';
 import Button from '@material-ui/core/Button';
@@ -12,6 +12,7 @@ import TrialSpecParam from './Params/Trial';
 import Parameters from './Params/Parameters';
 
 import { submitHPJob } from '../../../actions/hpCreateActions';
+import { fetchNamespaces } from '../../../actions/generalActions';
 
 import { connect } from 'react-redux';
 import Algorithm from './Params/Algorithm';
@@ -105,6 +106,10 @@ const addParameter = (source, destination) => {
 
 
 const HPParameters = (props) => {
+    useEffect(() => {
+        props.fetchNamespaces()
+    }, [])
+    
     const submitJob = () => {
         let data = {}
         data.metadata = {}
@@ -138,13 +143,14 @@ const HPParameters = (props) => {
     }
 
     const { classes } = props;
+    const namespaces = props.namespaces.filter((item) => item !== "All namespaces");
 
     return (
         <div className={classes.root}>
             {/* Common Metadata */}
             {SectionInTypography("Metadata", classes)}
             <br />
-            <CommonParametersMeta />
+            <CommonParametersMeta namespaces={namespaces} />
             {SectionInTypography("Common Parameters", classes)}
             <CommonParametersSpec />
             {SectionInTypography("Objective", classes)}
@@ -155,12 +161,12 @@ const HPParameters = (props) => {
             {SectionInTypography("Parameters", classes)}
             <Parameters />
             {SectionInTypography("Trial Spec", classes)}
-            <TrialSpecParam />
+            <TrialSpecParam namespaces={namespaces} />
 
             <div className={classes.submit}>
                 <Button variant="contained" color={"primary"} className={classes.button} onClick={submitJob}>
                     Deploy
-                    </Button>
+                </Button>
             </div>
         </div>
     )
@@ -177,6 +183,7 @@ const mapStateToProps = (state) => ({
     parameters: state[module].parameters,
     trial: state[module].trial,
     trialNamespace: state[module].trialNamespace,
+    namespaces: state["general"].namespaces,
 })
 
 //TODO: Added validation and remove it
@@ -187,4 +194,4 @@ const mapStateToProps = (state) => ({
 //     metricsName: PropTypes.arrayOf(PropTypes.string),
 // }
 
-export default connect(mapStateToProps, { submitHPJob })(withStyles(styles)(HPParameters));
+export default connect(mapStateToProps, { submitHPJob, fetchNamespaces })(withStyles(styles)(HPParameters));

@@ -3,7 +3,7 @@ set -o nounset
 set -o pipefail
 
 REGISTRY="quay.io/babylonhealth"
-TAG="v1alpha3"
+TAG="wip"
 PREFIX="katib"
 CMD_PREFIX="cmd"
 MACHINE_ARCH=`uname -m`

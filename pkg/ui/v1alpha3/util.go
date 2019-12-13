@@ -59,7 +59,7 @@ func (k *KatibUIHandler) updateTemplates(newTemplate map[string]interface{}, isD
 	var currentTemplates map[string]string
 	var err error
 
-	currentTemplates, err = k.katibClient.GetTrialTemplates()
+	currentTemplates, err = k.katibClient.GetTrialTemplates(k.katibClient.GetClientNamespace())
 	if err != nil {
 		return TemplateResponse{}, errors.New("GetTrialTemplates failed: " + err.Error())
 	}

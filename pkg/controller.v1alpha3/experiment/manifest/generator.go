@@ -34,7 +34,7 @@ type DefaultGenerator struct {
 
 // New creates a new Generator.
 func New(c client.Client) Generator {
-	katibClient := katibclient.NewWithGivenClient(c)
+	katibClient := katibclient.NewWithGivenClient(c, []string{"kubeflow"})
 	return &DefaultGenerator{
 		client: katibClient,
 	}

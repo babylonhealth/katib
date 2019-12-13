@@ -17,7 +17,6 @@ package katibclient
 
 import (
 	"context"
-
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -44,26 +43,42 @@ type Client interface {
 	GetTrialTemplates(namespace ...string) (map[string]string, error)
 	GetSuggestion(name string, namespace ...string) (*suggestionsv1alpha3.Suggestion, error)
 	UpdateTrialTemplates(newTrialTemplates map[string]string, namespace ...string) error
-	GetNamespaceList() (*apiv1.NamespaceList, error)
+	GetNamespaceList() ([]string, error)
 	GetClientNamespace() string
+	IsNamespaceAllowed(string) bool
 }
 
 type KatibClient struct {
-	client client.Client
-	namespace string
+	client     client.Client
+	namespaces []string
 }
 
 func (k *KatibClient) GetClientNamespace() string {
-	return k.namespace
+	if k.namespaces != nil && len(k.namespaces) > 0 {
+		return k.namespaces[0]
+	}
+	return consts.DefaultKatibNamespace
 }
 
-func NewWithGivenClient(c client.Client) Client {
+func (k *KatibClient) IsNamespaceAllowed(namespace string) bool {
+	if k.namespaces != nil && len(k.namespaces) > 0 {
+		for _, ns := range k.namespaces {
+			if ns == namespace {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func NewWithGivenClient(c client.Client, namespaces []string) Client {
 	return &KatibClient{
-		client: c,
+		client:     c,
+		namespaces: namespaces,
 	}
 }
 
-func NewClient(options client.Options, namespace string) (Client, error) {
+func NewClient(options client.Options, namespaces []string) (Client, error) {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, err
@@ -73,9 +88,9 @@ func NewClient(options client.Options, namespace string) (Client, error) {
 	suggestionsv1alpha3.AddToScheme(scheme.Scheme)
 	cl, err := client.New(cfg, options)
 	return &KatibClient{
-		client: cl,
-		namespace: namespace,
-	}, nil
+		client:     cl,
+		namespaces: namespaces,
+	}, err
 }
 
 func (k *KatibClient) InjectClient(c client.Client) {
@@ -87,7 +102,7 @@ func (k *KatibClient) GetClient() client.Client {
 }
 
 func (k *KatibClient) GetExperimentList(namespace ...string) (*experimentsv1alpha3.ExperimentList, error) {
-	ns := getNamespace(namespace...)
+	ns := k.getNamespace(namespace...)
 	expList := &experimentsv1alpha3.ExperimentList{}
 	listOpt := client.InNamespace(ns)
 
@@ -100,7 +115,7 @@ func (k *KatibClient) GetExperimentList(namespace ...string) (*experimentsv1alph
 
 func (k *KatibClient) GetSuggestion(name string, namespace ...string) (
 	*suggestionsv1alpha3.Suggestion, error) {
-	ns := getNamespace(namespace...)
+	ns := k.getNamespace(namespace...)
 	suggestion := &suggestionsv1alpha3.Suggestion{}
 
 	if err := k.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: ns}, suggestion); err != nil {
@@ -111,7 +126,7 @@ func (k *KatibClient) GetSuggestion(name string, namespace ...string) (
 }
 
 func (k *KatibClient) GetTrialList(name string, namespace ...string) (*trialsv1alpha3.TrialList, error) {
-	ns := getNamespace(namespace...)
+	ns := k.getNamespace(namespace...)
 	trialList := &trialsv1alpha3.TrialList{}
 	labels := map[string]string{consts.LabelExperimentName: name}
 	listOpt := &client.ListOptions{}
@@ -149,7 +164,7 @@ func (k *KatibClient) DeleteExperiment(experiment *experimentsv1alpha3.Experimen
 }
 
 func (k *KatibClient) GetExperiment(name string, namespace ...string) (*experimentsv1alpha3.Experiment, error) {
-	ns := getNamespace(namespace...)
+	ns := k.getNamespace(namespace...)
 	exp := &experimentsv1alpha3.Experiment{}
 	if err := k.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: ns}, exp); err != nil {
 		return nil, err
@@ -159,7 +174,7 @@ func (k *KatibClient) GetExperiment(name string, namespace ...string) (*experime
 
 // GetConfigMap returns the configmap for the given name and namespace.
 func (k *KatibClient) GetConfigMap(name string, namespace ...string) (map[string]string, error) {
-	ns := getNamespace(namespace...)
+	ns := k.getNamespace(namespace...)
 	configMap := &apiv1.ConfigMap{}
 	if err := k.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: ns}, configMap); err != nil {
 		return map[string]string{}, err
@@ -169,7 +184,7 @@ func (k *KatibClient) GetConfigMap(name string, namespace ...string) (map[string
 
 // GetTrialTemplates returns the trial template if it exists.
 func (k *KatibClient) GetTrialTemplates(namespace ...string) (map[string]string, error) {
-	ns := getNamespace(namespace...)
+	ns := k.getNamespace(namespace...)
 
 	data, err := k.GetConfigMap(experimentsv1alpha3.DefaultTrialConfigMapName, ns)
 	if err != nil && errors.IsNotFound(err) {
@@ -181,7 +196,7 @@ func (k *KatibClient) GetTrialTemplates(namespace ...string) (map[string]string,
 }
 
 func (k *KatibClient) UpdateTrialTemplates(newTrialTemplates map[string]string, namespace ...string) error {
-	ns := getNamespace(namespace...)
+	ns := k.getNamespace(namespace...)
 	trialTemplates := &apiv1.ConfigMap{}
 
 	if err := k.client.Get(context.TODO(), types.NamespacedName{Name: experimentsv1alpha3.DefaultTrialConfigMapName, Namespace: ns}, trialTemplates); err != nil {
@@ -195,19 +210,26 @@ func (k *KatibClient) UpdateTrialTemplates(newTrialTemplates map[string]string, 
 	return nil
 }
 
-func getNamespace(namespace ...string) string {
+func (k *KatibClient) getNamespace(namespace ...string) string {
 	if len(namespace) == 0 {
-		return consts.DefaultKatibNamespace
+		return k.GetClientNamespace()
 	}
 	return namespace[0]
 }
 
-func (k *KatibClient) GetNamespaceList() (*apiv1.NamespaceList, error) {
+func (k *KatibClient) GetNamespaceList() ([]string, error) {
+	var namespaces []string
 	namespaceList := &apiv1.NamespaceList{}
 	listOpt := &client.ListOptions{}
 
-	if err := k.client.List(context.TODO(), listOpt, namespaceList); err != nil {
-		return namespaceList, err
+	if k.namespaces != nil && len(k.namespaces) > 0 {
+		return k.namespaces, nil
 	}
-	return namespaceList, nil
+	if err := k.client.List(context.TODO(), listOpt, namespaceList); err != nil {
+		return nil, err
+	}
+	for _, namespace := range namespaceList.Items {
+		namespaces = append(namespaces, namespace.ObjectMeta.Name)
+	}
+	return namespaces, nil
 }

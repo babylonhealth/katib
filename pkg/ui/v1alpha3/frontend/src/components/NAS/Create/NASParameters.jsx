@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import PropTypes from 'prop-types';
 import withStyles from '@material-ui/styles/withStyles';
@@ -12,6 +12,7 @@ import Objective from "./Params/Objective"
 import Algorithm from "./Params/Algorithm"
 import TrialSpecParam from './Params/Trial';
 
+import { fetchNamespaces } from '../../../actions/generalActions';
 import { submitNASJob } from '../../../actions/nasCreateActions';
 
 
@@ -111,6 +112,10 @@ const addOperations = (source, destination) => {
 }
 
 const NASParameters = (props) => {
+    useEffect(() => {
+        props.fetchNamespaces()
+    }, [])
+
     const submitNASJob = () => {
         let data = {}
         
@@ -154,12 +159,13 @@ const NASParameters = (props) => {
     }
 
     const { classes } = props;
-    
+    const namespaces = props.namespaces.filter((item) => item !== "All namespaces");
+
     return (
             <div className={classes.root}>
                 {/* Common Metadata */}
                 {SectionInTypography("Metadata", classes)}
-                <CommonParametersMeta />
+                <CommonParametersMeta namespaces={namespaces} />
                 {SectionInTypography("Common Parameters", classes)}
                 <CommonParametersSpec />
                 {SectionInTypography("Objective", classes)}
@@ -169,7 +175,7 @@ const NASParameters = (props) => {
                 {SectionInTypography("NAS Config", classes)}
                 <NASConfig />
                 {SectionInTypography("Trial Spec", classes)}
-                <TrialSpecParam />
+                <TrialSpecParam namespaces={namespaces} />
                 <div className={classes.submit}>
                     <Button variant="contained" color={"primary"} className={classes.button} onClick={submitNASJob}>
                         Deploy
@@ -193,6 +199,7 @@ const mapStateToProps = (state) => ({
     operations: state[module].operations,
     trial: state[module].trial,
     trialNamespace: state[module].trialNamespace,
+    namespaces: state["general"].namespaces,
 })
 
 //TODO: Added validation and remove it
@@ -204,4 +211,4 @@ const mapStateToProps = (state) => ({
 //     metricsName: PropTypes.arrayOf(PropTypes.string),
 // }
 
-export default connect(mapStateToProps, { submitNASJob })(withStyles(styles)(NASParameters));
+export default connect(mapStateToProps, { submitNASJob, fetchNamespaces })(withStyles(styles)(NASParameters));

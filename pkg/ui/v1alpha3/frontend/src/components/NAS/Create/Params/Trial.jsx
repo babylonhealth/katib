@@ -9,7 +9,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
-import TextField from '@material-ui/core/TextField';
+import DisplayNamespaceSelection from '../../../Templates/Common/DisplayNamespaceSelection';
 
 import { connect } from 'react-redux';
 import { changeTrial, changeTrialNamespace } from '../../../../actions/nasCreateActions';
@@ -60,6 +60,7 @@ class TrialSpecParam extends React.Component {
     render() {
         const names = this.props.templates.map((template, i) => template.name)
 
+        const { namespaces } = this.props
         const { classes } = this.props
         return (
             <div>
@@ -74,10 +75,10 @@ class TrialSpecParam extends React.Component {
                             </Typography>
                         </Grid>
                         <Grid item xs={12} sm={8}>
-                            <TextField
-                                className={"Trial Namespace"}
+                            <DisplayNamespaceSelection
                                 value={this.props.trialNamespace}
                                 onChange={this.onTrialNamespaceChange}
+                                namespaces={namespaces}
                             />
                         </Grid>
                     </Grid>

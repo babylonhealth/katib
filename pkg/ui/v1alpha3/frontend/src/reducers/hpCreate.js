@@ -1,4 +1,5 @@
 import * as actions from '../actions/hpCreateActions';
+import { FETCH_NAMESPACES_REQUEST } from '../actions/generalActions'
 
 const initialState = {
     loading: false,
@@ -10,7 +11,7 @@ const initialState = {
         },
         {
             name: "Namespace",
-            value: "kubeflow",
+            value: "",
             description: "Namespace to deploy an experiment"
         }
     ],
@@ -98,7 +99,7 @@ const initialState = {
     allParameterTypes: ["int", "double", "categorical"],
     trial: "defaultTrialTemplate.yaml",
     currentYaml: '',
-    trialNamespace: "kubeflow",
+    trialNamespace: "",
 };
 
 const filterValue = (obj, key) => {

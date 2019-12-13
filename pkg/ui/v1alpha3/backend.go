@@ -2,6 +2,7 @@ package v1alpha3
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -17,8 +18,8 @@ import (
 	"github.com/kubeflow/katib/pkg/util/v1alpha3/katibclient"
 )
 
-func NewKatibUIHandler(namespace string) *KatibUIHandler {
-	kclient, err := katibclient.NewClient(client.Options{}, namespace)
+func NewKatibUIHandler(namespaces []string) *KatibUIHandler {
+	kclient, err := katibclient.NewClient(client.Options{}, namespaces)
 	if err != nil {
 		log.Printf("NewClient for Katib failed: %v", err)
 		panic(err)
@@ -30,10 +31,10 @@ func NewKatibUIHandler(namespace string) *KatibUIHandler {
 
 func (k *KatibUIHandler) getNamespaceFromRequest(r *http.Request) string {
 	namespace := r.URL.Query()["namespace"][0]
-	if namespace == "" {
-		return k.katibClient.GetClientNamespace()
+	if k.katibClient.IsNamespaceAllowed(namespace) {
+		return namespace
 	}
-	return namespace
+	return k.katibClient.GetClientNamespace()
 }
 
 func (k *KatibUIHandler) connectManager() (*grpc.ClientConn, api_pb_v1alpha3.ManagerClient) {
@@ -58,6 +59,11 @@ func (k *KatibUIHandler) SubmitYamlJob(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Unmarshal YAML content failed: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !k.katibClient.IsNamespaceAllowed(job.Namespace) {
+			log.Printf("Namespace not allowed %s", job.Namespace)
+			http.Error(w, fmt.Sprintf("Namespace note allowed %s", job.Namespace), http.StatusBadRequest)
 			return
 		}
 		err = k.katibClient.CreateExperiment(&job)
@@ -183,21 +189,12 @@ func (k *KatibUIHandler) AddEditDeleteTemplate(w http.ResponseWriter, r *http.Re
 }
 
 func (k *KatibUIHandler) FetchNamespaces(w http.ResponseWriter, r *http.Request) {
-	var namespaces []string
-
-	if k.katibClient.GetClientNamespace() == "" {
-		namespaceList, err := k.katibClient.GetNamespaceList()
-		if err != nil {
-			log.Printf("GetNamespaceList failed: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		for _, namespace := range namespaceList.Items {
-			namespaces = append(namespaces, namespace.ObjectMeta.Name)
-		}
-	} else {
-		namespaces = append(namespaces, k.katibClient.GetClientNamespace())
+	enableCors(&w)
+	namespaces, err := k.katibClient.GetNamespaceList()
+	if err != nil {
+		log.Printf("GetNamespaceList failed: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	response, err := json.Marshal(namespaces)

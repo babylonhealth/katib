@@ -1,5 +1,5 @@
 import { take, put, call, fork, select, all, takeEvery } from 'redux-saga/effects';
-import axios from 'axios';
+import axios from './axios-config';
 import * as templateActions from '../actions/templateActions';
 import * as hpMonitorActions from '../actions/hpMonitorActions';
 import * as hpCreateActions from '../actions/hpCreateActions';
